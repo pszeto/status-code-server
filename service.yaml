@@ -1,12 +1,12 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: generic-server
+  name: status-code-server
   namespace: default
 spec:
   type: LoadBalancer
   selector:
-    app: generic-server
+    app: status-code
   ports:
   - name: http
     port: 8080
