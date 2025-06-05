@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"github.com/google/uuid"
 )
 
 var startTime time.Time
@@ -20,6 +21,10 @@ func init() {
 }
 
 func status(w http.ResponseWriter, req *http.Request) {
+	logId := uuid.New()
+	hostname, _ := os.Hostname()
+	log.Printf("[%s] Handling %s request : %s %s %s %s headers(%s)\n", logId, req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Server", "status-code-server")
 	resp := make(map[string]string)
@@ -28,11 +33,26 @@ func status(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Fatalf("Error happened in JSON marshal. Err: %s", err)
 	}
+	statusCode := 200
+	statusEndpointCodeFromEnv, ok := os.LookupEnv("STATUS_ENDPOINT_CODE")
+	if ok {
+		num, err := strconv.Atoi(statusEndpointCodeFromEnv)
+		if err == nil {
+			statusCode = num
+		}
+	}
+	w.WriteHeader(statusCode)
 	w.Write(jsonResp)
+	log.Printf("[%s] - %s [%d] %s %s \n", logId, hostname, statusCode, req.Host, req.URL.Path)
+	log.Printf("[%s] Completed handling %s request : %s %s %s %s headers(%s)\n", logId, req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
 	return
 }
 
 func root(w http.ResponseWriter, req *http.Request) {
+	logId := uuid.New()
+	hostname, _ := os.Hostname()
+	log.Printf("[%s] Handling %s request : %s %s %s %s headers(%s)\n", logId, req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
+
 	statusCode := 200
 	statusCodeFromEnv, ok := os.LookupEnv("STATUS_CODE")
 	if !ok {
@@ -43,12 +63,15 @@ func root(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Println("STATUS_CODE not a number.  Defaulting to 200")
 			log.Println("STATUS_CODE from env is: ", num)
+		} else {
+			statusCode = num
 		}
-		statusCode = num
 	}
 	w.Header().Set("X-Server", "status-code-server")
 	w.WriteHeader(statusCode)
 	w.Write([]byte("DONE"))
+	log.Printf("[%s] - %s [%d] %s %s \n", logId, hostname, statusCode, req.Host, req.URL.Path)
+	log.Printf("[%s] Completed handling %s request : %s %s %s %s headers(%s)\n", logId, req.Proto, hostname, req.Host, req.Method, req.URL.Path, req.Header)
 }
 
 
